@@ -1,0 +1,8 @@
+base: ../base_ssl.yaml
+
+experiment:
+  name: ssl_tau090
+  notes: Minimal SSL with fixed pseudo-label threshold tau=0.90.
+
+ssl:
+  tau: 0.9

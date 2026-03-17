@@ -1,0 +1,22 @@
+base: ../base_ssl.yaml
+
+experiment:
+  name: ssl_smoke_test
+  notes: Engineering verification config for the minimal EMA and pseudo-label SSL path.
+
+data:
+  labeled_split: smoke_labeled.txt
+  unlabeled_split: smoke_unlabeled.txt
+  val_split: smoke_labeled.txt
+  test_split: smoke_labeled.txt
+  num_workers: 0
+  persistent_workers: false
+
+train:
+  epochs: 2
+  labeled_batch_size: 2
+  unlabeled_batch_size: 2
+  log_interval: 1
+
+ssl:
+  tau: 0.95

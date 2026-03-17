@@ -1,0 +1,95 @@
+experiment:
+  name: ssl_base
+  output_root: outputs
+  notes: Base config for the minimal Step-4/5 SSL training path.
+
+data:
+  dataset_name: BUSI
+  dataset_root: data/BUSI
+  manifest_path: data_meta/manifest.csv
+  merged_mask_root: data_meta/merged_masks
+  split_root: data_meta/splits/seed0
+  labeled_split: labeled_subset.txt
+  unlabeled_split: unlabeled_pool.txt
+  val_split: val.txt
+  test_split: test.txt
+  image_size: 512
+  image_channels: 3
+  grayscale_to_rgb: repeat
+  include_normal: false
+  label_groups: [benign, malignant]
+  image_mean: [0.485, 0.456, 0.406]
+  image_std: [0.229, 0.224, 0.225]
+  train_hflip_prob: 0.5
+  train_vflip_prob: 0.0
+  train_max_rotate_deg: 10.0
+  train_scale_min: 0.9
+  train_scale_max: 1.1
+  train_crop_min_ratio: 1.0
+  train_color_jitter_strength: 0.2
+  train_blur_prob: 0.1
+  train_noise_std: 0.0
+  num_workers: 4
+  pin_memory: true
+  persistent_workers: true
+
+model:
+  name: deeplabv3plus
+  encoder_name: resnet50
+  encoder_weights: imagenet
+  encoder_weight_source: segmentation_models_pytorch::resnet50/imagenet
+  encoder_weight_note: standard ImageNet-pretrained ResNet50 encoder; not claimed as official torchvision ResNet50 weights
+  claim_official_torchvision_equivalence: false
+  in_channels: 3
+  classes: 1
+
+loss:
+  supervised_name: bce_plus_dice
+  bce_weight: 1.0
+  dice_weight: 1.0
+
+optimizer:
+  name: adamw
+  lr: 0.001
+  weight_decay: 0.0001
+
+train:
+  seed: 0
+  epochs: 100
+  labeled_batch_size: 2
+  unlabeled_batch_size: 2
+  amp: true
+  device: null
+  grad_clip_norm: null
+  log_interval: 10
+  val_interval: 1
+
+ssl:
+  tau: 0.95
+  lambda_u: 1.0
+  lambda_u_warmup_epochs: 10
+  ema_decay: 0.99
+  unlabeled_loss:
+    name: masked_bce
+  geometry_hflip_prob: 0.5
+  geometry_vflip_prob: 0.0
+  geometry_max_rotate_deg: 10.0
+  geometry_scale_min: 0.9
+  geometry_scale_max: 1.1
+  geometry_crop_min_ratio: 1.0
+  weak_color_jitter_strength: 0.2
+  strong_color_jitter_strength: 0.6
+  weak_blur_prob: 0.1
+  strong_blur_prob: 0.5
+  weak_noise_std: 0.0
+  strong_noise_std: 0.05
+
+analysis:
+  enabled: true
+
+eval:
+  threshold: 0.5
+  primary_metric: dice
+
+logging:
+  use_tensorboard: true

@@ -1,0 +1,8 @@
+base: ../base_sup.yaml
+
+experiment:
+  name: sup_full
+  notes: Full supervised reference using all train sample_ids.
+
+data:
+  train_split: train.txt

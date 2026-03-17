@@ -1,0 +1,8 @@
+base: ../base_sup.yaml
+
+experiment:
+  name: sup_subset
+  notes: Low-label supervised baseline using labeled_subset.txt.
+
+data:
+  train_split: labeled_subset.txt
