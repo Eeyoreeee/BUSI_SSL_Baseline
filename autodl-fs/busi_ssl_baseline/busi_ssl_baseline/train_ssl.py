@@ -21,6 +21,7 @@ from busi_seg.losses.supervised_loss import build_supervised_loss
 from busi_seg.models.builder import build_model
 from busi_seg.ssl.ema import copy_student_to_teacher
 from busi_seg.ssl.pseudo_labeler import FixedThresholdPseudoLabeler
+from busi_seg.utils.lr_scheduler import build_scheduler
 
 
 CONFIG_DUMP_FILENAME = "config_dump.yaml"
@@ -142,6 +143,11 @@ def main() -> None:
         logger.info("Teacher initialized from student weights and frozen for EMA updates.")
 
         optimizer = build_optimizer(config, student_model)
+        scheduler = build_scheduler(
+            optimizer,
+            total_epochs=int(config["train"]["epochs"]),
+            scheduler_config=config.get("scheduler"),
+        )
         supervised_criterion = build_supervised_loss(config)
         unlabeled_criterion = build_masked_unlabeled_loss(config)
         evaluator = SegmentationEvaluator.from_config(config)
@@ -149,6 +155,16 @@ def main() -> None:
         stats_collector = build_stats_collector(config)
         if stats_collector is None:
             logger.info("Detached analysis logging is disabled.")
+        if scheduler is None:
+            logger.info("Epoch-level LR scheduler is disabled for SSL training.")
+        else:
+            logger.info(
+                "Using epoch-level scheduler: "
+                f"{config['scheduler']['name']} "
+                f"(warmup_epochs={config['scheduler']['warmup_epochs']}, "
+                f"min_lr_ratio={config['scheduler']['min_lr_ratio']}); "
+                "epoch 1 starts from the warmup-adjusted learning rate."
+            )
 
         checkpoint_manager = CheckpointManager(
             output_dir=output_dir,
@@ -160,6 +176,7 @@ def main() -> None:
             student_model=student_model,
             teacher_model=teacher_model,
             optimizer=optimizer,
+            scheduler=scheduler,
             supervised_criterion=supervised_criterion,
             unlabeled_criterion=unlabeled_criterion,
             labeled_loader=labeled_loader,

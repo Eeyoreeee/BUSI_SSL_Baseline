@@ -1,0 +1,9 @@
+base: ../base_sup.yaml
+
+experiment:
+  name: sup_subset_1of8
+  notes: Recommended low-label supervised baseline using the 1-of-8 labeled subset.
+
+data:
+  split_root: /root/autodl-fs/busi_ssl_baseline/busi_ssl_baseline/data_meta/splits/seed0_labeled_1of8
+  train_split: labeled_subset.txt

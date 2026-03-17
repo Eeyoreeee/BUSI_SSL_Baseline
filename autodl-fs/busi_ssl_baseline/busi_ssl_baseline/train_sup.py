@@ -20,6 +20,7 @@ from busi_seg.engine.trainer_sup import SupervisedTrainer
 from busi_seg.logging.logger import build_experiment_logger
 from busi_seg.losses.supervised_loss import build_supervised_loss
 from busi_seg.models.builder import build_model
+from busi_seg.utils.lr_scheduler import build_scheduler
 
 
 CONFIG_DUMP_FILENAME = "config_dump.yaml"
@@ -124,8 +125,23 @@ def main() -> None:
 
         model = build_model(config)
         optimizer = build_optimizer(config, model)
+        scheduler = build_scheduler(
+            optimizer,
+            total_epochs=int(config["train"]["epochs"]),
+            scheduler_config=config.get("scheduler"),
+        )
         criterion = build_supervised_loss(config)
         evaluator = SegmentationEvaluator.from_config(config)
+        if scheduler is None:
+            logger.info("Epoch-level LR scheduler is disabled.")
+        else:
+            logger.info(
+                "Using epoch-level scheduler: "
+                f"{config['scheduler']['name']} "
+                f"(warmup_epochs={config['scheduler']['warmup_epochs']}, "
+                f"min_lr_ratio={config['scheduler']['min_lr_ratio']}); "
+                "epoch 1 starts from the warmup-adjusted learning rate."
+            )
         checkpoint_manager = CheckpointManager(
             output_dir=output_dir,
             primary_metric_name=str(config["eval"]["primary_metric"]),
@@ -135,6 +151,7 @@ def main() -> None:
             config=config,
             model=model,
             optimizer=optimizer,
+            scheduler=scheduler,
             criterion=criterion,
             train_loader=train_loader,
             val_loader=val_loader,

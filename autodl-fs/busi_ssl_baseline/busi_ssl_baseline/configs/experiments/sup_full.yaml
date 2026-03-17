@@ -2,7 +2,10 @@ base: ../base_sup.yaml
 
 experiment:
   name: sup_full
-  notes: Full supervised reference using all train sample_ids.
+  notes: Full supervised reference with the unified warmup-plus-cosine LR recipe.
 
 data:
+  # This split_root is used only to read train.txt / val.txt / test.txt.
+  # Those files are consistent across the labeled-fraction split directories.
+  split_root: /root/autodl-fs/busi_ssl_baseline/busi_ssl_baseline/data_meta/splits/seed0_labeled_1of8
   train_split: train.txt

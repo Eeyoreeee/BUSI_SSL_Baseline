@@ -7,6 +7,7 @@ import time
 
 import torch
 from torch import nn
+from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 
 from busi_seg.logging.logger import ExperimentLogger
@@ -24,6 +25,7 @@ class SupervisedTrainer:
         config: dict,
         model: nn.Module,
         optimizer: torch.optim.Optimizer,
+        scheduler: LRScheduler | None,
         criterion: nn.Module,
         train_loader: DataLoader,
         val_loader: DataLoader | None,
@@ -35,6 +37,7 @@ class SupervisedTrainer:
         self.config = config
         self.model = model.to(device)
         self.optimizer = optimizer
+        self.scheduler = scheduler
         self.criterion = criterion
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -65,6 +68,10 @@ class SupervisedTrainer:
         self.logger.info(
             f"AMP enabled: {self.amp_enabled}; primary metric: {self.primary_metric}."
         )
+        if self.scheduler is not None:
+            self.logger.info(
+                f"scheduler | epoch=1 | current_epoch_lr={self.optimizer.param_groups[0]['lr']:.6g}"
+            )
 
         for epoch in range(1, self.epochs + 1):
             train_metrics = self._train_one_epoch(epoch)
@@ -108,6 +115,12 @@ class SupervisedTrainer:
                         f"Saved new best checkpoint to {best_path} "
                         f"with {self.primary_metric}={best_metric:.4f}."
                     )
+
+            if self.scheduler is not None and epoch < self.epochs:
+                self.scheduler.step()
+                self.logger.info(
+                    f"scheduler | next_epoch={epoch + 1} | next_epoch_lr={self.optimizer.param_groups[0]['lr']:.6g}"
+                )
 
         if self.best_metric is None and self.val_loader is not None:
             val_metrics = self._run_validation(self.epochs)

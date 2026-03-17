@@ -1,7 +1,7 @@
 experiment:
   name: ssl_base
   output_root: outputs
-  notes: Base config for the minimal Step-4/5 SSL training path.
+  notes: Base config for the minimal Step-4/5 SSL path with future-ready scheduler fields.
 
 data:
   dataset_name: BUSI
@@ -52,6 +52,12 @@ optimizer:
   name: adamw
   lr: 0.001
   weight_decay: 0.0001
+
+scheduler:
+  enabled: false
+  name: cosine_with_linear_warmup
+  warmup_epochs: 5
+  min_lr_ratio: 0.01
 
 train:
   seed: 0

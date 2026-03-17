@@ -50,6 +50,12 @@ Step 5 is completed for detached analysis logging:
 - epoch-level pseudo-label diagnostics
 - analysis metrics written to `train.log`, `metrics.csv`, and optional `tb/`
 
+The current training recipe also supports configurable epoch-level dynamic learning rate scheduling via config:
+
+- linear warmup
+- cosine decay
+- shared scheduler contract for supervised and SSL configs
+
 Not implemented yet:
 
 - GT-based debug analysis
@@ -218,6 +224,37 @@ outputs/<exp_name>/
 
 When `analysis.enabled=true` for SSL training, epoch-level detached analysis metrics are appended to the same `metrics.csv` and optional TensorBoard stream. They remain diagnostics only.
 
+## Learning Rate Recipe
+
+The baseline now supports an optional epoch-level scheduler configured as:
+
+```yaml
+scheduler:
+  enabled: true
+  name: cosine_with_linear_warmup
+  warmup_epochs: 5
+  min_lr_ratio: 0.01
+```
+
+This keeps the learning-rate recipe minimal and explicit:
+
+- `optimizer.lr` is the base learning rate
+- epoch 1 already uses the warmup-adjusted learning rate
+- the first epochs use linear warmup
+- the remaining epochs use cosine decay down to `min_lr_ratio * optimizer.lr`
+- `scheduler.step()` happens at epoch end only to prepare the next epoch LR
+- when `scheduler.enabled=false`, training behavior stays unchanged
+
+For the next supervised reruns, the recommended reference experiments are:
+
+- `configs/experiments/sup_full.yaml`
+- `configs/experiments/sup_subset_1of8.yaml`
+
+For `configs/experiments/sup_full.yaml`, the configured `split_root` is used
+only to read `train.txt` / `val.txt` / `test.txt`. It does not make full
+supervised training depend on `labeled_subset.txt`, and those full train/val/test
+files are consistent across the labeled-fraction split directories.
+
 ## Config System Contract
 
 - YAML only
@@ -242,6 +279,7 @@ Step 1:
 - `configs/base_sup.yaml`
 - `configs/base_ssl.yaml`
 - `configs/experiments/sup_subset.yaml`
+- `configs/experiments/sup_subset_1of8.yaml`
 - `configs/experiments/sup_full.yaml`
 - `configs/experiments/ssl_tau090.yaml`
 - `configs/experiments/ssl_tau095.yaml`
@@ -283,6 +321,7 @@ Step 4:
 Step 5:
 
 - `busi_seg/analysis/stats_collector.py`
+- `busi_seg/utils/lr_scheduler.py`
 
 ## What Comes Next
 

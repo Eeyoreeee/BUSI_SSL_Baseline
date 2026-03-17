@@ -7,6 +7,7 @@ import time
 
 import torch
 from torch import nn
+from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 
 from busi_seg.analysis.stats_collector import StatsCollector
@@ -34,6 +35,7 @@ class SSLTrainer:
         student_model: nn.Module,
         teacher_model: nn.Module,
         optimizer: torch.optim.Optimizer,
+        scheduler: LRScheduler | None,
         supervised_criterion: nn.Module,
         unlabeled_criterion: nn.Module,
         labeled_loader: DataLoader,
@@ -50,6 +52,7 @@ class SSLTrainer:
         self.student_model = student_model.to(device)
         self.teacher_model = teacher_model.to(device)
         self.optimizer = optimizer
+        self.scheduler = scheduler
         self.supervised_criterion = supervised_criterion
         self.unlabeled_criterion = unlabeled_criterion
         self.labeled_loader = labeled_loader
@@ -94,6 +97,10 @@ class SSLTrainer:
         if self.stats_collector is not None:
             self.logger.info(
                 "Detached analysis logging is enabled for the unlabeled teacher outputs."
+            )
+        if self.scheduler is not None:
+            self.logger.info(
+                f"scheduler | epoch=1 | current_epoch_lr={self.optimizer.param_groups[0]['lr']:.6g}"
             )
 
         for epoch in range(1, self.epochs + 1):
@@ -140,6 +147,12 @@ class SSLTrainer:
                         f"Saved new best checkpoint to {best_path} "
                         f"with {self.primary_metric}={best_metric:.4f}."
                     )
+
+            if self.scheduler is not None and epoch < self.epochs:
+                self.scheduler.step()
+                self.logger.info(
+                    f"scheduler | next_epoch={epoch + 1} | next_epoch_lr={self.optimizer.param_groups[0]['lr']:.6g}"
+                )
 
         if self.best_metric is None and self.val_loader is not None:
             val_metrics = self._run_validation(self.epochs)

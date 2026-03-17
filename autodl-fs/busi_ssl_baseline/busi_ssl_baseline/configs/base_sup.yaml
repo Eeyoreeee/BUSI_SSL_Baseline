@@ -1,7 +1,7 @@
 experiment:
   name: sup_base
   output_root: /root/autodl-fs/busi_ssl_baseline/busi_ssl_baseline/outputs
-  notes: Base supervised config for runnable Step-3 training.
+  notes: Base supervised config with the unified stage-1 optimization recipe.
 
 data:
   dataset_name: BUSI
@@ -51,6 +51,12 @@ optimizer:
   name: adamw
   lr: 0.001
   weight_decay: 0.0001
+
+scheduler:
+  enabled: true
+  name: cosine_with_linear_warmup
+  warmup_epochs: 5
+  min_lr_ratio: 0.01
 
 train:
   seed: 0

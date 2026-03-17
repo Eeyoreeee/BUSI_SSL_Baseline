@@ -23,6 +23,7 @@ TOP_LEVEL_MERGE_SECTIONS = {
     "model",
     "loss",
     "optimizer",
+    "scheduler",
     "train",
     "ssl",
     "analysis",
